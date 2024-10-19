@@ -1,23 +1,42 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from "react";
+import { Navigate, Routes, Route } from "react-router-dom";
+import "./App.css";
+import { Login } from "./components/Authentication/login";
+import { Logout } from "./components/Authentication/logout";
+import { Signup } from "./components/Authentication/signup";
+import RefreshHandler from "./RefreshHandler";
+import { Home } from "./components/Home/Home";
+import { Main } from "./components/Main/Main";
+import { useState } from "react";
+import { Navbar2 } from "./common/Navbar2";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const PrivateRoute = ({ element }) => {
+    return isAuthenticated ? element : <Navigate to="/login" />;
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
+      {isAuthenticated && <Navbar2 />}
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/logout" element={<Logout />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<PrivateRoute element={<Home />} />} />
+        <Route path="/DataCollection" element={<Main />} />
+      </Routes>
     </div>
   );
 }
