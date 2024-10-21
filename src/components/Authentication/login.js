@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
@@ -6,9 +6,11 @@ import { toast } from "sonner";
 import { baseUrl } from "../../api/baseUrl";
 import { LOGIN } from "../../api/constApi";
 import { useNavigate } from "react-router-dom";
+import { Spinner } from "../../common/Spinner";
 
 export const Login = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const loginInitialState = {
     email: "",
@@ -23,6 +25,7 @@ export const Login = () => {
   });
 
   const handleLogin = async (values) => {
+    setLoading(true);
     try {
       const payload = { ...values };
       const response = await axios.post(`${baseUrl}${LOGIN}`, payload, {
@@ -45,6 +48,8 @@ export const Login = () => {
       }
     } catch (error) {
       toast.error(error.response.data.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,7 +68,11 @@ export const Login = () => {
     [formikLogin]
   );
 
-  return (
+  return loading ? (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Spinner />
+    </div>
+  ) : (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h2 className="text-xl font-semibold text-center mb-2">

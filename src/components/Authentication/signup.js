@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import * as Yup from "yup";
 import { baseUrl } from "../../api/baseUrl";
 import { SIGNUP } from "../../api/constApi";
@@ -6,9 +6,11 @@ import { toast } from "sonner";
 import { useFormik } from "formik";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Spinner } from "../../common/Spinner";
 
 export const Signup = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const signUpInitialState = {
     name: "",
@@ -30,6 +32,7 @@ export const Signup = () => {
   });
 
   const handleSignUp = async (values) => {
+    setLoading(true);
     try {
       const payload = { ...values };
       const response = await axios.post(`${baseUrl}${SIGNUP}`, payload, {
@@ -49,6 +52,8 @@ export const Signup = () => {
       }
     } catch (error) {
       toast.error(error.response.data.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,7 +72,11 @@ export const Signup = () => {
     [formikSignUp]
   );
 
-  return (
+  return loading ? (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Spinner />
+    </div>
+  ) : (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h2 className="text-xl font-semibold text-center mb-2">
