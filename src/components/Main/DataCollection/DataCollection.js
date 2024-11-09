@@ -39,7 +39,7 @@ export const DataCollection = () => {
           setLocationHistory((prevHistory) => [...prevHistory, newLocation]);
           setError(null);
 
-          // Start collecting data every 500 milliseconds
+          // Start collecting data every 1000 milliseconds
           const id = setInterval(() => {
             navigator.geolocation.getCurrentPosition(
               (position) => {
@@ -63,7 +63,7 @@ export const DataCollection = () => {
               },
               { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
             );
-          }, 500);
+          }, 1000);
 
           setIntervalId(id);
         },
