@@ -10,6 +10,7 @@ export const DataCollection = () => {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState(null);
   const [locationHistory, setLocationHistory] = useState([]);
+  const [totalDistance, setTotalDistance] = useState(0);
   const [error, setError] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
 
@@ -21,6 +22,28 @@ export const DataCollection = () => {
       }
     };
   }, [intervalId]);
+
+  const haversineDistance = (loc1, loc2) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (loc2.latitude - loc1.latitude) * (Math.PI / 180);
+    const dLon = (loc2.longitude - loc1.longitude) * (Math.PI / 180);
+    const lat1 = loc1.latitude * (Math.PI / 180);
+    const lat2 = loc2.latitude * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
+  const calculateTotalDistance = (newLocation) => {
+    if (locationHistory.length > 0) {
+      const lastLocation = locationHistory[locationHistory.length - 1];
+      const distance = haversineDistance(lastLocation, newLocation);
+      setTotalDistance((prevDistance) => prevDistance + distance);
+    }
+  };
 
   const startWatchingLocation = () => {
     if (navigator.geolocation) {
@@ -37,6 +60,7 @@ export const DataCollection = () => {
 
           setUserLocation(newLocation);
           setLocationHistory((prevHistory) => [...prevHistory, newLocation]);
+          calculateTotalDistance(newLocation);
           setError(null);
 
           // Start collecting data every 1000 milliseconds
@@ -56,6 +80,7 @@ export const DataCollection = () => {
                   ...prevHistory,
                   updatedLocation,
                 ]);
+                calculateTotalDistance(updatedLocation);
               },
               (error) => {
                 console.error("Error updating location:", error);
@@ -88,8 +113,9 @@ export const DataCollection = () => {
         const data = {
           locationHistory: locationHistory,
           pathId: localStorage.getItem("pathId"),
-          userId: localStorage.getItem("userId"),
+          userId: localStorage.getItem("user_id"),
           vehicleId: localStorage.getItem("vehicleId"),
+          totalDistance: totalDistance,
         };
 
         const header = getAuthHeader();
@@ -214,6 +240,15 @@ export const DataCollection = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="text-base sm:text-xl md:text-2xl font-medium">
+                Total Distance
+              </h3>
+              <p className="text-sm sm:text-base">
+                {totalDistance.toFixed(2)} km
+              </p>
             </div>
           </div>
         </div>
