@@ -34,14 +34,24 @@ export const DataCollection = () => {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    const distance = R * c; // Distance in km
+
+    console.log(`Calculated distance: ${distance.toFixed(6)} km`);
+    return distance;
   };
 
   const calculateTotalDistance = (newLocation) => {
     if (locationHistory.length > 0) {
       const lastLocation = locationHistory[locationHistory.length - 1];
       const distance = haversineDistance(lastLocation, newLocation);
-      setTotalDistance((prevDistance) => prevDistance + distance);
+
+      if (distance > 0) {
+        setTotalDistance((prevDistance) => prevDistance + distance);
+      } else {
+        console.warn("Distance is zero; skipping update.");
+      }
+    } else {
+      console.warn("Location history is empty; no distance calculated.");
     }
   };
 
