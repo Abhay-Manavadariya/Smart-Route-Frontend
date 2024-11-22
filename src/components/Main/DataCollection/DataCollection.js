@@ -13,13 +13,13 @@ export const DataCollection = () => {
   const [totalDistance, setTotalDistance] = useState(0);
   const [error, setError] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
-  const [speeds, setSpeeds] = useState([]); // For speed smoothing
+  const [speeds, setSpeeds] = useState([]);
 
   // Constants
-  const EARTH_RADIUS = 6371; // Earth's radius in kilometers
-  const MIN_DISTANCE_THRESHOLD = 0.002; // 2 meters in kilometers
+  const EARTH_RADIUS = 6371000; // Earth's radius in meters
+  const MIN_DISTANCE_THRESHOLD = 0.5; // 2 meters
   const MAX_SPEED_THRESHOLD = 139; // 139 m/s ≈ 500 km/h
-  const UPDATE_INTERVAL = 1000; // 1 seconds
+  const UPDATE_INTERVAL = 1000; // 1 second
   const SPEED_BUFFER_SIZE = 5; // Number of speed readings to average
 
   useEffect(() => {
@@ -45,13 +45,19 @@ export const DataCollection = () => {
 
   const smoothSpeed = useCallback(
     (newSpeed) => {
+      // Ensure speed is in m/s
+      const speedInMetersPerSecond = newSpeed || 0;
+
       setSpeeds((prevSpeeds) => {
-        const updatedSpeeds = [...prevSpeeds, newSpeed].slice(
+        const updatedSpeeds = [...prevSpeeds, speedInMetersPerSecond].slice(
           -SPEED_BUFFER_SIZE
         );
         return updatedSpeeds;
       });
-      return speeds.reduce((a, b) => a + b, 0) / speeds.length || newSpeed;
+
+      return speeds.length > 0
+        ? speeds.reduce((a, b) => a + b, 0) / speeds.length
+        : speedInMetersPerSecond;
     },
     [speeds]
   );
@@ -93,7 +99,7 @@ export const DataCollection = () => {
       return 0;
     }
 
-    return Number(distance.toFixed(6));
+    return Number((distance / 1000).toFixed(6)); // Convert to kilometers
   }, []);
 
   const calculateTotalDistance = useCallback(
@@ -113,6 +119,12 @@ export const DataCollection = () => {
       // Validate speed to detect potential GPS jumps
       const timeElapsed =
         (newLocation.timestamp - lastLocation.timestamp) / 1000; // seconds
+
+      if (timeElapsed <= 0) {
+        console.warn("Invalid time difference; skipping speed calculation.");
+        return;
+      }
+
       const speedBetweenPoints = (distance * 1000) / timeElapsed; // meters per second
 
       if (speedBetweenPoints > MAX_SPEED_THRESHOLD) {
@@ -183,7 +195,10 @@ export const DataCollection = () => {
 
       try {
         const data = {
-          locationHistory: locationHistory,
+          locationHistory: locationHistory.map((loc) => ({
+            ...loc,
+            speed: (loc.speed * 3.6).toFixed(2),
+          })),
           pathId: localStorage.getItem("pathId"),
           userId: localStorage.getItem("user_id"),
           vehicleId: localStorage.getItem("vehicleId"),
@@ -323,7 +338,7 @@ export const DataCollection = () => {
                           {location.longitude.toFixed(6)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(location.speed * 3.6).toFixed(1)}
+                          {(location.speed * 3.6).toFixed(2)}
                         </td>
                       </tr>
                     ))}
